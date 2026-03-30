@@ -10,6 +10,7 @@ import logging
 from typing import Optional
 import pyautogui
 import time
+import ocr
 
 logger = logging.getLogger("Vision")
 
@@ -250,3 +251,23 @@ def highlight_fields(img: np.ndarray, fields: list[dict]) -> np.ndarray:
         cv2.putText(vis, f["type"], (f["x"], f["y"] - 5),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.4, color, 1)
     return vis
+
+
+def scrape_mrj_data_pane(img: np.ndarray) -> dict:
+    """
+    Extract raw data from the MRJ left-hand pane image.
+    Returns a dictionary of found label:value pairs.
+    """
+    # Preprocess specifically for the gray/white text area
+    text = ocr.extract_full_text(img)
+    pairs_list = ocr.parse_label_value_pairs(text)
+    
+    # Convert list of dicts to a single flat dict
+    data = {}
+    for p in pairs_list:
+        label = p.get("label", "").strip()
+        value = p.get("value", "").strip()
+        if label:
+            data[label] = value
+            
+    return data

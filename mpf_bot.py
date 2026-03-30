@@ -127,6 +127,8 @@ class MPFBot:
         delay_between_forms: float = 2.0,
         use_visual_sync: bool = True,
         end_sequence: dict | None = None,
+        source_mode: str = "csv",  # "csv" or "screen"
+        source_region: tuple | None = None, # (x, y, w, h)
     ):
         self.data_file = data_file
         self.log_cb = log_cb or (lambda m: print(m))
@@ -139,6 +141,9 @@ class MPFBot:
         self.form_delay = delay_between_forms
         self.use_visual_sync = use_visual_sync
         self.end_sequence = end_sequence or {}
+        
+        self.source_mode = source_mode
+        self.source_region = source_region
 
         self._running = False
         self._pause = False
@@ -173,17 +178,6 @@ class MPFBot:
 
     def _run(self):
         try:
-            records = self._load_data()
-            if not records:
-                self.log("❌ No data loaded. Please check your CSV/JSON data file.")
-                self._running = False
-                self.stopped_cb()
-                return
-
-            total = len(records)
-            self.log(f"📋 Loaded {total} records from data file")
-            self.status(f"Starting automation — {total} records to fill")
-
             # Countdown so user can switch to MPF window
             for i in range(5, 0, -1):
                 if not self._running:
@@ -191,35 +185,12 @@ class MPFBot:
                 self.status(f"⏳ Starting in {i}s — switch to MPF window NOW!")
                 time.sleep(1)
 
-            for idx, record in enumerate(records, start=1):
-                if not self._running:
-                    break
-                while self._pause:
-                    time.sleep(0.3)
-
-                self.log(f"\n━━━ Record {idx}/{total} ━━━")
-                self.status(f"📝 Filling record {idx}/{total}...")
-
-                success = self._fill_form(record)
-
-                if success:
-                    self.record_done_cb(idx, total)
-                    self.log(f"✅ Record {idx} submitted successfully")
-                else:
-                    self.log(f"⚠️ Record {idx} — some fields may have issues")
-
-                if idx < total:
-                    if self.use_visual_sync:
-                        self.status("⏳ Waiting for MPF form ready state (Visual Sync)...")
-                        # First, small buffer for the 'Downloading' modal to move into view/appear
-                        time.sleep(1.0)
-                        vision.wait_for_mpf_form()
-                    else:
-                        self.log(f"⏳ Waiting {self.form_delay}s for next form to load...")
-                        time.sleep(self.form_delay)
-
-            self.log(f"\n🎉 All {total} records processed!")
-            self.status(f"✅ Complete — {total} records filled")
+            if self.source_mode == "screen":
+                self.log("👁️ Running in Live Vision Mode (Reading Screen)")
+                self._run_vision_loop()
+            else:
+                self.log("📁 Running in CSV Data Mode")
+                self._run_csv_loop()
 
         except Exception as e:
             self.log(f"❌ Critical error: {e}")
@@ -228,6 +199,103 @@ class MPFBot:
         finally:
             self._running = False
             self.stopped_cb()
+
+    def _run_csv_loop(self):
+        records = self._load_data()
+        if not records:
+            self.log("❌ No data loaded. Please check your CSV/JSON data file.")
+            return
+
+        total = len(records)
+        self.status(f"Starting CSV automation — {total} records")
+
+        for idx, record in enumerate(records, start=1):
+            if not self._running: break
+            while self._pause: time.sleep(0.3)
+
+            self.log(f"\n━━━ Record {idx}/{total} ━━━")
+            success = self._fill_form(record)
+            
+            if success:
+                self.record_done_cb(idx, total)
+                self.log(f"✅ Record {idx} submitted")
+            
+            if idx < total:
+                self._wait_for_next_form()
+
+        self.log(f"\n🎉 All {total} records processed!")
+
+    def _run_vision_loop(self):
+        if not self.source_region:
+            self.log("❌ No Source Region defined! Use 'Calibrate Source' first.")
+            return
+
+        idx = 1
+        while self._running:
+            while self._pause: time.sleep(0.3)
+
+            self.log(f"\n━━━ Auto-Vision Record {idx} ━━━")
+            self.status("👁️ Scraping data from left pane...")
+            
+            record = self._scrape_from_screen()
+            if not record:
+                self.log("⚠️ No data found on screen. Retrying in 2s...")
+                time.sleep(2)
+                continue
+
+            self.status(f"📝 Filling record {idx}...")
+            success = self._fill_form(record)
+            
+            if success:
+                self.record_done_cb(idx, idx) # Fake total for now
+                self.log(f"✅ Record {idx} submitted")
+            
+            idx += 1
+            self._wait_for_next_form()
+
+    def _wait_for_next_form(self):
+        if self.use_visual_sync:
+            self.status("⏳ Waiting for MPF ready state (Visual Sync)...")
+            time.sleep(1.0)
+            vision.wait_for_mpf_form()
+        else:
+            self.log(f"⏳ Waiting {self.form_delay}s for next form...")
+            time.sleep(self.form_delay)
+
+    def _scrape_from_screen(self) -> dict:
+        """Capture top and bottom of source pane and parse."""
+        if not self.source_region: return {}
+        
+        # 1. Capture Top
+        img_top = vision.capture_screen(self.source_region)
+        data = vision.scrape_mrj_data_pane(img_top)
+        
+        # 2. Scroll Down
+        self._scroll_source_pane()
+        time.sleep(0.8) # Wait for scroll
+        
+        # 3. Capture Bottom
+        img_bottom = vision.capture_screen(self.source_region)
+        data_bottom = vision.scrape_mrj_data_pane(img_bottom)
+        
+        # 4. Merge
+        data.update(data_bottom)
+        
+        # Normalize keys via aliases
+        normalized = {}
+        for k, v in data.items():
+            alias = COLUMN_ALIASES.get(k.lower().strip(), k.lower().strip())
+            normalized[alias] = v
+            
+        return normalized
+
+    def _scroll_source_pane(self):
+        """Hover over the source region and scroll down."""
+        if not self.source_region: return
+        x, y, w, h = self.source_region
+        cx, cy = x + w//2, y + h//2
+        pyautogui.moveTo(cx, cy)
+        pyautogui.scroll(-500) # Scroll down
 
     # ─── Form Filling ─────────────────────────────────────────────────────────
 

@@ -715,13 +715,37 @@ class MainWindow(QMainWindow):
         layout.setSpacing(12)
 
         # ── Header ──
-        hdr = QLabel("🗂️  MRJ MPF Form Filling — Dedicated Automation Bot")
+        hdr = QLabel("🗂️  MRJ MPF Automation — Top-Grade Vision Bot")
         hdr.setStyleSheet(f"color: {ACCENT}; font-size: 15px; font-weight: 700;")
         layout.addWidget(hdr)
-        sub = QLabel("Automatically fills all 18 fields in MPF Form Filling Software v7.3 from a CSV / JSON data file.")
+        sub = QLabel("Fully automatic form filling. Choose to read from a CSV file or scan the screen in real-time.")
         sub.setStyleSheet(f"color: {TEXT_SECONDARY}; font-size: 11px;")
         sub.setWordWrap(True)
         layout.addWidget(sub)
+
+        # ── Source Mode Selection ──
+        mode_group = QGroupBox("🎯 Process Mode")
+        mg_layout = QHBoxLayout(mode_group)
+        self.mpf_mode_csv = QCheckBox("📁 CSV Data Mode")
+        self.mpf_mode_vision = QCheckBox("👁️ Live Vision Mode (Read from Screen)")
+        self.mpf_mode_csv.setChecked(True)
+        
+        # Make them exclusive
+        def toggle_mode(m):
+            if m == "csv":
+                self.mpf_mode_vision.setChecked(not self.mpf_mode_csv.isChecked())
+            else:
+                self.mpf_mode_csv.setChecked(not self.mpf_mode_vision.isChecked())
+            self._update_mpf_ui_visibility()
+
+        self.mpf_mode_csv.toggled.connect(lambda: toggle_mode("csv"))
+        self.mpf_mode_vision.toggled.connect(lambda: toggle_mode("vision"))
+        
+        mg_layout.addWidget(self.mpf_mode_csv)
+        mg_layout.addSpacing(20)
+        mg_layout.addWidget(self.mpf_mode_vision)
+        mg_layout.addStretch()
+        layout.addWidget(mode_group)
 
         # ── File Selection ──
         file_group = QGroupBox("📂 Data File")
@@ -913,10 +937,55 @@ class MainWindow(QMainWindow):
 
         # internal state
         self._mpf_data_file = ""
+        self._mpf_source_region = None
         self._mpf_worker: MPFWorker | None = None
         self._mpf_total = 0
 
         return w
+
+    def _update_mpf_ui_visibility(self):
+        is_vision = self.mpf_mode_vision.isChecked()
+        self.mpf_file_group.setVisible(not is_vision)
+        self.mpf_vision_group.setVisible(is_vision)
+
+    def _mpf_calibrate_source(self):
+        msg = QMessageBox(self)
+        msg.setWindowTitle("Calibrate Source Area")
+        msg.setText("First, click 'OK' then move your mouse to the TOP-LEFT corner of the gray data pane on the MRJ software. Wait 3 seconds...")
+        msg.exec_()
+        
+        self.mpf_cal_btn.setText("Hover Top-Left (3s)...")
+        self.mpf_cal_btn.setEnabled(False)
+        QApplication.processEvents()
+        
+        def step2():
+            x1, y1 = pyautogui.position()
+            self._mpf_log(f"📍 Top-Left captured: ({x1}, {y1})", "info")
+            msg2 = QMessageBox(self)
+            msg2.setText("Now move your mouse to the BOTTOM-RIGHT corner of the gray data pane. Wait 3 seconds...")
+            msg2.exec_()
+            self.mpf_cal_btn.setText("Hover Bottom-Right (3s)...")
+            QApplication.processEvents()
+            
+            def finish():
+                x2, y2 = pyautogui.position()
+                w, h = x2 - x1, y2 - y1
+                if w < 50 or h < 50:
+                    QMessageBox.critical(self, "Invalid Area", "Selected area is too small. Please try again.")
+                    self.mpf_cal_btn.setText("🎯 Set Source Region")
+                    self.mpf_cal_btn.setEnabled(True)
+                    return
+                
+                self._mpf_source_region = (x1, y1, w, h)
+                self.mpf_source_lbl.setText(f"Region: {x1}, {y1} ({w}x{h})")
+                self.mpf_source_lbl.setStyleSheet(f"color: {SUCCESS}; font-family: monospace; font-size: 11px;")
+                self.mpf_cal_btn.setText("✅ Source Set")
+                self.mpf_cal_btn.setEnabled(True)
+                self._mpf_log(f"🎯 MPF Source Region Locked: {self._mpf_source_region}", "success")
+            
+            QTimer.singleShot(3000, finish)
+            
+        QTimer.singleShot(3000, step2)
 
     def _start_coord_picker(self, key, btn):
         original_text = btn.text()
@@ -971,6 +1040,13 @@ class MainWindow(QMainWindow):
         field_delay = self.mpf_field_delay.value() / 100.0
         form_delay  = float(self.mpf_form_delay.value())
 
+        mode = "screen" if self.mpf_mode_vision.isChecked() else "csv"
+        
+        if mode == "screen" and not self._mpf_source_region:
+            QMessageBox.warning(self, "Calibration Needed", 
+                "Please calibrate the Source Region first for Live Vision mode.")
+            return
+
         bot = MPFBot(
             data_file=self._mpf_data_file,
             log_cb=lambda m: self._mpf_log(m),
@@ -981,6 +1057,8 @@ class MainWindow(QMainWindow):
             delay_between_fields=field_delay,
             delay_between_forms=form_delay,
             use_visual_sync=self.mpf_sync_cb.isChecked(),
+            source_mode=mode,
+            source_region=self._mpf_source_region,
             end_sequence={
                 "upload": self.btn_coords["upload"]["pos"],
                 "upload_delay": self.btn_coords["upload"]["delay"].value(),
