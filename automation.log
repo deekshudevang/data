@@ -1,0 +1,18 @@
+2026-03-30 15:32:38,627 [BotEngine] INFO: 📌 Active App: AI Smart Data Entry Automation Tool
+2026-03-30 15:32:38,633 [BotEngine] INFO: 
+━━━ Iteration #1 ━━━
+2026-03-30 15:32:38,635 [BotEngine] INFO: 📷 Capturing screen...
+2026-03-30 15:32:38,732 [BotEngine] INFO: 🔤 Running OCR...
+2026-03-30 15:32:53,351 [OCR] INFO: Parsed 1 label-value pairs from OCR text
+2026-03-30 15:32:53,352 [BotEngine] INFO: 📋 Found 1 label-value pairs
+2026-03-30 15:32:53,354 [BotEngine] INFO:    • [15: 32:36] 3S Active Apps AL Smet Data Brtay Autemation Tool
+2026-03-30 15:32:53,357 [BotEngine] INFO: 🔎 Detecting form fields...
+2026-03-30 15:32:53,400 [Vision] INFO: Detected 37 input fields
+2026-03-30 15:32:53,402 [BotEngine] INFO: 🧩 Detected 37 input fields
+2026-03-30 15:32:53,405 [Vision] INFO: Associated 3 label-field pairs
+2026-03-30 15:32:53,405 [BotEngine] INFO: 🔗 Associated 3 label-field pairs
+2026-03-30 15:32:53,407 [BotEngine] INFO: 🤖 Running semantic field matching...
+2026-03-30 15:32:53,421 [Mapping] WARNING: No field match found for label: '[15'
+2026-03-30 15:32:53,422 [Mapping] INFO: Matched 0/1 label-value pairs to fields
+2026-03-30 15:32:53,422 [BotEngine] INFO: ✅ Matched 0 fields
+2026-03-30 15:32:53,423 [BotEngine] INFO: ⚠️ No fields matched. Will retry or try learning from scratch.
