@@ -24,12 +24,19 @@ pytesseract.pytesseract.tesseract_cmd = TESSERACT_CMD
 logger.info(f"Tesseract path: {TESSERACT_CMD}")
 
 
-def preprocess_image(img: np.ndarray) -> np.ndarray:
-    """Preprocess image for optimal OCR accuracy."""
+def preprocess_image(img: np.ndarray, enhance_contrast: bool = True) -> np.ndarray:
+    """Preprocess image for optimal OCR accuracy on the MRJ data pane."""
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+
+    if enhance_contrast:
+        # CLAHE for local contrast enhancement — great for the gray MRJ pane
+        clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
+        gray = clahe.apply(gray)
+
     # Upscale for better OCR
-    scale = 2.0
+    scale = 2.5
     gray = cv2.resize(gray, None, fx=scale, fy=scale, interpolation=cv2.INTER_CUBIC)
+
     # Adaptive threshold
     thresh = cv2.adaptiveThreshold(
         gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C,

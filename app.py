@@ -16,9 +16,12 @@ from PyQt5.QtWidgets import (
     QPushButton, QLabel, QTextEdit, QTabWidget, QSlider, QComboBox,
     QGroupBox, QStatusBar, QFrame, QSplitter, QTableWidget, QTableWidgetItem,
     QHeaderView, QProgressBar, QSpinBox, QCheckBox, QSizePolicy, QScrollArea,
-    QAction, QMenuBar, QMessageBox
+    QAction, QMenuBar, QMessageBox, QGraphicsOpacityEffect
 )
-from PyQt5.QtCore import Qt, QThread, pyqtSignal, QTimer, QSize
+from PyQt5.QtCore import (
+    Qt, QThread, pyqtSignal, QTimer, QSize,
+    QPropertyAnimation, QEasingCurve
+)
 from PyQt5.QtGui import (
     QFont, QColor, QPalette, QIcon, QPixmap, QPainter,
     QLinearGradient, QBrush
@@ -43,113 +46,125 @@ logger = logging.getLogger("App")
 
 # ─── Colors & Style ───────────────────────────────────────────────────────────
 
-DARK_BG = "#0D1117"
-CARD_BG = "#161B22"
-ACCENT = "#00D4FF"
-ACCENT2 = "#7C3AED"
-SUCCESS = "#10B981"
-WARNING = "#F59E0B"
-ERROR = "#EF4444"
-TEXT_PRIMARY = "#F0F6FC"
-TEXT_SECONDARY = "#8B949E"
-BORDER = "#30363D"
-HOVER = "#1F2937"
+DARK_BG = "#0B0E14"
+CARD_BG = "#131720"
+ACCENT = "#00F2FF" # Vibrant Cyan
+ACCENT2 = "#8B5CF6" # Electric Purple
+SUCCESS = "#00FF9C"
+WARNING = "#FFB800"
+ERROR = "#FF4B4B"
+TEXT_PRIMARY = "#FFFFFF"
+TEXT_SECONDARY = "#94A3B8"
+BORDER = "#1E293B"
+HOVER = "#1E293B"
+PANEL_BG = "#161B22"
 
 APP_STYLE = f"""
 QMainWindow, QWidget {{
     background-color: {DARK_BG};
     color: {TEXT_PRIMARY};
-    font-family: 'Segoe UI', Arial, sans-serif;
+    font-family: 'Segoe UI', system-ui, sans-serif;
     font-size: 13px;
 }}
 
 QTabWidget::pane {{
     border: 1px solid {BORDER};
-    border-radius: 8px;
+    border-radius: 12px;
     background: {CARD_BG};
+    top: -1px;
 }}
 
 QTabBar::tab {{
-    background: {DARK_BG};
+    background: transparent;
     color: {TEXT_SECONDARY};
-    padding: 10px 20px;
-    border-top-left-radius: 8px;
-    border-top-right-radius: 8px;
-    margin-right: 2px;
+    padding: 12px 24px;
+    border-radius: 8px;
+    margin-right: 4px;
+    margin-bottom: 8px;
     font-weight: 600;
+    font-size: 11px;
+    letter-spacing: 0.2px;
+    text-transform: uppercase;
 }}
 QTabBar::tab:selected {{
-    background: {CARD_BG};
+    background: {ACCENT}11;
     color: {ACCENT};
-    border-bottom: 2px solid {ACCENT};
+    border: 1px solid {ACCENT}33;
 }}
-QTabBar::tab:hover {{
-    background: {HOVER};
+QTabBar::tab:hover:!selected {{
+    background: {HOVER}55;
+    color: {TEXT_PRIMARY};
 }}
 
 QGroupBox {{
     border: 1px solid {BORDER};
-    border-radius: 10px;
-    margin-top: 14px;
-    padding: 12px;
-    background: {CARD_BG};
-    font-weight: 600;
+    border-radius: 14px;
+    margin-top: 18px;
+    padding: 16px;
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                                stop:0 {CARD_BG}, stop:1 #0F131A);
+    font-weight: 700;
     color: {TEXT_SECONDARY};
 }}
 QGroupBox::title {{
     subcontrol-origin: margin;
-    left: 12px;
-    padding: 0 6px;
-    color: {ACCENT};
+    left: 16px;
+    padding: 0 8px;
+    color: {ACCENT2};
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
 }}
 
 QTextEdit {{
-    background: #0A0E14;
+    background: #06090F;
     border: 1px solid {BORDER};
-    border-radius: 8px;
-    color: #AFAFAF;
-    font-family: 'Cascadia Code', 'Courier New', monospace;
+    border-radius: 10px;
+    color: #CBD5E1;
+    font-family: 'Cascadia Code', 'Consolas', monospace;
     font-size: 11px;
-    padding: 8px;
+    padding: 12px;
 }}
 
 QTableWidget {{
-    background: {CARD_BG};
+    background: transparent;
     border: 1px solid {BORDER};
-    border-radius: 8px;
+    border-radius: 10px;
     gridline-color: {BORDER};
     color: {TEXT_PRIMARY};
 }}
 QTableWidget::item {{
-    padding: 6px;
-    border-bottom: 1px solid {BORDER};
+    padding: 10px;
+    border-bottom: 1px solid {BORDER}66;
 }}
 QTableWidget::item:selected {{
-    background: {ACCENT}33;
-    color: {TEXT_PRIMARY};
+    background: {ACCENT}11;
+    color: {ACCENT};
 }}
 QHeaderView::section {{
-    background: #1C2333;
+    background: #0F172A;
     color: {TEXT_SECONDARY};
-    padding: 8px;
+    padding: 12px;
     border: none;
     border-bottom: 1px solid {BORDER};
-    font-weight: 600;
-    font-size: 11px;
+    font-weight: 700;
+    font-size: 10px;
     text-transform: uppercase;
+    letter-spacing: 0.8px;
 }}
 
 QSlider::groove:horizontal {{
-    height: 4px;
+    height: 6px;
     background: {BORDER};
-    border-radius: 2px;
+    border-radius: 3px;
 }}
 QSlider::handle:horizontal {{
     background: {ACCENT};
-    border-radius: 8px;
-    width: 16px;
-    height: 16px;
-    margin: -6px 0;
+    border: 2px solid {DARK_BG};
+    border-radius: 9px;
+    width: 18px;
+    height: 18px;
+    margin: -7px 0;
 }}
 QSlider::sub-page:horizontal {{
     background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
@@ -229,10 +244,10 @@ QCheckBox {{
     spacing: 8px;
 }}
 QCheckBox::indicator {{
-    width: 16px;
-    height: 16px;
+    width: 18px;
+    height: 18px;
     border: 1px solid {BORDER};
-    border-radius: 4px;
+    border-radius: 6px;
     background: {DARK_BG};
 }}
 QCheckBox::indicator:checked {{
@@ -243,64 +258,55 @@ QCheckBox::indicator:checked {{
 
 
 def make_button(text: str, primary: bool = False, danger: bool = False,
-                icon_char: str = "") -> QPushButton:
-    """Factory for styled buttons."""
+                glass: bool = False, icon_char: str = "") -> QPushButton:
+    """Factory for premium styled buttons with hover glows and glass variant."""
     btn = QPushButton(f"  {icon_char}  {text}" if icon_char else text)
     btn.setCursor(Qt.PointingHandCursor)
-    btn.setMinimumHeight(40)
+    btn.setMinimumHeight(44)
     btn.setFont(QFont("Segoe UI", 10, QFont.Bold))
 
     if danger:
-        style = f"""
-            QPushButton {{
-                background: qlineargradient(x1:0,y1:0,x2:1,y2:0,
-                    stop:0 #7F1D1D, stop:1 #991B1B);
-                color: white;
-                border: none;
-                border-radius: 8px;
-                padding: 8px 20px;
-            }}
-            QPushButton:hover {{
-                background: qlineargradient(x1:0,y1:0,x2:1,y2:0,
-                    stop:0 #991B1B, stop:1 #B91C1C);
-            }}
-            QPushButton:pressed {{ background: #7F1D1D; }}
-            QPushButton:disabled {{ background: #374151; color: #6B7280; }}
-        """
+        bg = f"qlineargradient(x1:0,y1:0,x2:1,y2:0, stop:0 {ERROR}, stop:1 #C41E3A)"
+        hover_bg = "#EF4444"
+        glow = ERROR
+    elif glass:
+        bg = "rgba(255,255,255,0.04)"
+        hover_bg = "rgba(255,255,255,0.08)"
+        glow = ACCENT
     elif primary:
-        style = f"""
-            QPushButton {{
-                background: qlineargradient(x1:0,y1:0,x2:1,y2:0,
-                    stop:0 {ACCENT2}, stop:1 {ACCENT});
-                color: white;
-                border: none;
-                border-radius: 8px;
-                padding: 8px 20px;
-            }}
-            QPushButton:hover {{
-                background: qlineargradient(x1:0,y1:0,x2:1,y2:0,
-                    stop:0 #8B5CF6, stop:1 #22D3EE);
-            }}
-            QPushButton:pressed {{ background: {ACCENT2}; }}
-            QPushButton:disabled {{ background: #374151; color: #6B7280; }}
-        """
+        bg = f"qlineargradient(x1:0,y1:0,x2:1,y2:0, stop:0 {ACCENT2}, stop:1 {ACCENT})"
+        hover_bg = "qlineargradient(x1:0,y1:0,x2:1,y2:0, stop:0 #A855F7, stop:1 #22D3EE)"
+        glow = ACCENT
     else:
-        style = f"""
-            QPushButton {{
-                background: #1C2333;
-                color: {TEXT_PRIMARY};
-                border: 1px solid {BORDER};
-                border-radius: 8px;
-                padding: 8px 20px;
-            }}
-            QPushButton:hover {{
-                background: {HOVER};
-                border-color: {ACCENT};
-                color: {ACCENT};
-            }}
-            QPushButton:pressed {{ background: {DARK_BG}; }}
-            QPushButton:disabled {{ background: #374151; color: #6B7280; }}
-        """
+        bg = "#1E293B"
+        hover_bg = "#334155"
+        glow = ACCENT
+
+    text_color = 'rgba(255,255,255,0.85)' if glass else 'white'
+    border_base = 'rgba(255,255,255,0.08)' if glass else 'rgba(255,255,255,0.05)'
+
+    style = f"""
+        QPushButton {{
+            background: {bg};
+            color: {text_color};
+            border: 1px solid {border_base};
+            border-radius: 12px;
+            padding: 8px 24px;
+        }}
+        QPushButton:hover {{
+            background: {hover_bg};
+            border-color: {glow}55;
+        }}
+        QPushButton:pressed {{
+            background: {bg};
+            padding-top: 10px;
+            padding-left: 26px;
+        }}
+        QPushButton:disabled {{
+            background: #1e1e1e;
+            color: #4B5563;
+        }}
+    """
     btn.setStyleSheet(style)
     return btn
 
@@ -370,7 +376,7 @@ class MPFWorker(QThread):
 # ─── Status Card Widget ────────────────────────────────────────────────────────
 
 class StatCard(QFrame):
-    """A metric card showing a stat with icon."""
+    """A metric card showing a stat with icon and subtle glow."""
     def __init__(self, title: str, value: str = "0", icon: str = "●", color: str = ACCENT):
         super().__init__()
         self.color = color
@@ -378,34 +384,128 @@ class StatCard(QFrame):
             QFrame {{
                 background: {CARD_BG};
                 border: 1px solid {BORDER};
-                border-radius: 12px;
+                border-radius: 16px;
                 padding: 4px;
             }}
             QFrame:hover {{
-                border-color: {color};
+                border-color: {color}77;
+                background: {CARD_BG}DD;
             }}
         """)
 
         layout = QVBoxLayout(self)
-        layout.setSpacing(4)
+        layout.setSpacing(2)
+        layout.setContentsMargins(15, 12, 15, 12)
 
         top = QHBoxLayout()
         icon_lbl = QLabel(icon)
-        icon_lbl.setStyleSheet(f"color: {color}; font-size: 18px;")
+        icon_lbl.setStyleSheet(f"color: {color}; font-size: 22px;")
         top.addWidget(icon_lbl)
         top.addStretch()
+        
+        badge = QLabel("LIVE")
+        badge.setStyleSheet(f"color: {color}AA; font-size: 9px; font-weight: 800; border: 1px solid {color}33; padding: 2px 6px; border-radius: 6px;")
+        top.addWidget(badge)
         layout.addLayout(top)
 
         self.value_lbl = QLabel(value)
-        self.value_lbl.setStyleSheet(f"color: {TEXT_PRIMARY}; font-size: 22px; font-weight: 700;")
+        self.value_lbl.setStyleSheet(f"color: {TEXT_PRIMARY}; font-size: 26px; font-weight: 800; margin-top: 4px;")
         layout.addWidget(self.value_lbl)
 
-        title_lbl = QLabel(title)
-        title_lbl.setStyleSheet(f"color: {TEXT_SECONDARY}; font-size: 11px;")
+        title_lbl = QLabel(title.upper())
+        title_lbl.setStyleSheet(f"color: {TEXT_SECONDARY}; font-size: 10px; font-weight: 700; letter-spacing: 0.5px;")
         layout.addWidget(title_lbl)
 
     def set_value(self, val: str):
-        self.value_lbl.setText(val)
+        self.value_lbl.setText(str(val))
+
+
+# ─── Pulse Indicator Widget ───────────────────────────────────────────────────
+
+class PulseIndicator(QLabel):
+    """Animated pulsing dot for live status display."""
+    def __init__(self, color: str = SUCCESS, parent=None):
+        super().__init__("●", parent)
+        self._color = color
+        self.setStyleSheet(f"color: {color}; font-size: 16px;")
+        self._effect = QGraphicsOpacityEffect(self)
+        self.setGraphicsEffect(self._effect)
+        self._effect.setOpacity(1.0)
+        self._anim = QPropertyAnimation(self._effect, b"opacity")
+        self._anim.setDuration(1500)
+        self._anim.setKeyValueAt(0, 1.0)
+        self._anim.setKeyValueAt(0.5, 0.3)
+        self._anim.setKeyValueAt(1.0, 1.0)
+        self._anim.setEasingCurve(QEasingCurve.InOutSine)
+        self._anim.setLoopCount(-1)
+
+    def start_pulse(self):
+        self._anim.start()
+
+    def stop_pulse(self):
+        self._anim.stop()
+        self._effect.setOpacity(1.0)
+
+    def set_color(self, color: str):
+        self._color = color
+        self.setStyleSheet(f"color: {color}; font-size: 16px;")
+
+
+# ─── Modern Activity Stream Widget ───────────────────────────────────────────
+
+class ModernActivityStream(QTextEdit):
+    """Premium log widget with category badges and formatted timestamps."""
+    CATEGORIES = {
+        "VISION": (ACCENT, "\U0001F441\uFE0F"),
+        "FORM":   (ACCENT2, "\U0001F4DD"),
+        "SUCCESS":(SUCCESS, "\u2705"),
+        "WARNING":(WARNING, "\u26A0\uFE0F"),
+        "ERROR":  (ERROR,   "\u274C"),
+        "SYSTEM": (TEXT_SECONDARY, "\u2699\uFE0F"),
+        "DATA":   ("#38BDF8", "\U0001F4CA"),
+    }
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setReadOnly(True)
+        self.setStyleSheet(f"""
+            QTextEdit {{
+                background: #06090F;
+                border: 1px solid {BORDER};
+                border-radius: 12px;
+                color: #CBD5E1;
+                font-family: 'Cascadia Code', 'Consolas', monospace;
+                font-size: 11px;
+                padding: 14px;
+            }}
+        """)
+
+    def add_entry(self, msg: str, level: str = "info"):
+        """Add a formatted entry with timestamp, category badge, and color."""
+        cat = "SYSTEM"
+        ml = msg.lower()
+        if any(w in ml for w in ["vision", "screen", "ocr", "read"]):
+            cat = "VISION"
+        elif any(w in ml for w in ["form", "field", "fill", "type"]):
+            cat = "FORM"
+        elif any(w in ml for w in ["data", "csv", "record", "file"]):
+            cat = "DATA"
+        if level == "success": cat = "SUCCESS"
+        elif level == "warning": cat = "WARNING"
+        elif level == "error": cat = "ERROR"
+
+        lc = {"info": TEXT_SECONDARY, "success": SUCCESS, "warning": WARNING, "error": ERROR}
+        color = lc.get(level, TEXT_SECONDARY)
+        cc, ci = self.CATEGORIES.get(cat, (TEXT_SECONDARY, "\u2022"))
+        ts = datetime.now().strftime("%H:%M:%S") + f".{datetime.now().microsecond // 1000:03d}"
+        fw = "700" if level != "info" else "400"
+        ts_h = f'<span style="color:#334155;font-size:10px;font-weight:500;">{ts}</span>'
+        badge = (f'<span style="background:{cc}15;color:{cc};border:1px solid {cc}33;'
+                 f'border-radius:4px;padding:1px 6px;font-size:9px;font-weight:800;'
+                 f'letter-spacing:0.5px;">{ci} {cat}</span>')
+        m_h = f'<span style="color:{color};font-weight:{fw};">{msg}</span>'
+        self.append(f"{ts_h} &nbsp; {badge} &nbsp; {m_h}")
+        self.ensureCursorVisible()
 
 
 # ─── Main Window ──────────────────────────────────────────────────────────────
@@ -482,52 +582,71 @@ class MainWindow(QMainWindow):
 
     def _build_header(self) -> QWidget:
         header = QWidget()
-        header.setFixedHeight(70)
+        header.setFixedHeight(84)
         header.setStyleSheet(f"""
-            background: qlineargradient(x1:0,y1:0,x2:1,y2:0,
-                stop:0 {CARD_BG}, stop:0.5 #1A1F2E, stop:1 {CARD_BG});
+            background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                stop:0 {CARD_BG}, stop:0.5 #0D1117, stop:1 {CARD_BG});
             border-bottom: 1px solid {BORDER};
         """)
         layout = QHBoxLayout(header)
-        layout.setContentsMargins(20, 0, 20, 0)
+        layout.setContentsMargins(28, 0, 28, 0)
 
         # Logo + title
         title_layout = QVBoxLayout()
-        title = QLabel("⚡ AI Data Entry Automation")
+        title_layout.setSpacing(2)
+        title = QLabel(f"ANTIGRAVITY <span style='color:{ACCENT};'>PRO</span>")
         title.setStyleSheet(f"""
             color: {TEXT_PRIMARY};
-            font-size: 18px;
-            font-weight: 700;
-            letter-spacing: 0.5px;
+            font-size: 22px;
+            font-weight: 800;
+            letter-spacing: 2px;
         """)
-        subtitle = QLabel("Intelligent Form Filling · Self-Learning AI")
-        subtitle.setStyleSheet(f"color: {TEXT_SECONDARY}; font-size: 11px;")
+        subtitle = QLabel("AI DATA ENTRY AUTOMATION · V7.5")
+        subtitle.setStyleSheet(f"color: {TEXT_SECONDARY}; font-size: 10px; font-weight: 600; letter-spacing: 1.5px;")
+        title_layout.addStretch()
         title_layout.addWidget(title)
         title_layout.addWidget(subtitle)
+        title_layout.addStretch()
         layout.addLayout(title_layout)
         layout.addStretch()
 
-        # Status indicator
-        self.status_dot = QLabel("●")
-        self.status_dot.setStyleSheet(f"color: {TEXT_SECONDARY}; font-size: 22px;")
-        self.status_label_header = QLabel("Idle")
+        # Status indicator — glassmorphism card with pulse
+        status_box = QFrame()
+        status_box.setStyleSheet(f"""
+            QFrame {{
+                background: rgba(255,255,255,0.03);
+                border-radius: 14px;
+                border: 1px solid rgba(255,255,255,0.06);
+            }}
+            QFrame:hover {{
+                background: rgba(255,255,255,0.05);
+                border-color: {ACCENT}33;
+            }}
+        """)
+        sb_layout = QHBoxLayout(status_box)
+        sb_layout.setContentsMargins(16, 8, 16, 8)
+
+        self.pulse_indicator = PulseIndicator(TEXT_SECONDARY)
+        self.status_label_header = QLabel("SYSTEM IDLE")
         self.status_label_header.setStyleSheet(
-            f"color: {TEXT_SECONDARY}; font-weight: 600; font-size: 13px;"
+            f"color: {TEXT_PRIMARY}; font-weight: 800; font-size: 11px; letter-spacing: 0.5px;"
         )
-        layout.addWidget(self.status_dot)
-        layout.addWidget(self.status_label_header)
-        layout.addSpacing(20)
+        sb_layout.addWidget(self.pulse_indicator)
+        sb_layout.addSpacing(6)
+        sb_layout.addWidget(self.status_label_header)
+        layout.addWidget(status_box)
+        layout.addSpacing(24)
 
         # Control buttons
         self.start_btn = make_button("Start Automation", primary=True, icon_char="▶")
         self.stop_btn = make_button("Stop", danger=True, icon_char="⏹")
         self.stop_btn.setEnabled(False)
 
-        self.start_btn.clicked.connect(self._mpf_start)
-        self.stop_btn.clicked.connect(self._mpf_stop)
+        self.start_btn.clicked.connect(self._master_start)
+        self.stop_btn.clicked.connect(self._master_stop)
 
         layout.addWidget(self.start_btn)
-        layout.addSpacing(8)
+        layout.addSpacing(12)
         layout.addWidget(self.stop_btn)
 
         return header
@@ -650,8 +769,7 @@ class MainWindow(QMainWindow):
         info.setStyleSheet(f"color: {TEXT_SECONDARY}; font-size: 11px; margin-bottom: 6px;")
         layout.addWidget(info)
 
-        self.activity_log = QTextEdit()
-        self.activity_log.setReadOnly(True)
+        self.activity_log = ModernActivityStream()
         layout.addWidget(self.activity_log)
 
         btn_row = QHBoxLayout()
@@ -728,9 +846,12 @@ class MainWindow(QMainWindow):
         mg_layout = QHBoxLayout(mode_group)
         self.mpf_mode_csv = QCheckBox("📁 CSV Data Mode")
         self.mpf_mode_vision = QCheckBox("👁️ Live Vision Mode (Read from Screen)")
-        self.mpf_mode_csv.setChecked(True)
-        
-        # Make them exclusive
+
+        # Default = Vision Mode (no file needed — reads screen directly)
+        self.mpf_mode_vision.setChecked(True)
+        self.mpf_mode_csv.setChecked(False)
+
+        # Make them mutually exclusive
         def toggle_mode(m):
             if m == "csv":
                 self.mpf_mode_vision.setChecked(not self.mpf_mode_csv.isChecked())
@@ -740,16 +861,16 @@ class MainWindow(QMainWindow):
 
         self.mpf_mode_csv.toggled.connect(lambda: toggle_mode("csv"))
         self.mpf_mode_vision.toggled.connect(lambda: toggle_mode("vision"))
-        
-        mg_layout.addWidget(self.mpf_mode_csv)
-        mg_layout.addSpacing(20)
+
         mg_layout.addWidget(self.mpf_mode_vision)
+        mg_layout.addSpacing(20)
+        mg_layout.addWidget(self.mpf_mode_csv)
         mg_layout.addStretch()
         layout.addWidget(mode_group)
 
         # ── File Selection ──
-        file_group = QGroupBox("📂 Data File")
-        fg_layout = QHBoxLayout(file_group)
+        self.mpf_file_group = QGroupBox("📂 Data File")
+        fg_layout = QHBoxLayout(self.mpf_file_group)
         self.mpf_file_lbl = QLabel("No file selected")
         self.mpf_file_lbl.setStyleSheet(
             f"color: {TEXT_SECONDARY}; font-family: monospace; font-size: 11px;"
@@ -757,14 +878,33 @@ class MainWindow(QMainWindow):
         self.mpf_file_lbl.setWordWrap(True)
         fg_layout.addWidget(self.mpf_file_lbl, stretch=1)
 
-        browse_btn = make_button("Browse…", icon_char="📂")
+        browse_btn = make_button("Browse…", glass=True, icon_char="📂")
         browse_btn.clicked.connect(self._mpf_browse_file)
         fg_layout.addWidget(browse_btn)
 
-        sample_btn = make_button("Create Sample CSV", icon_char="📄")
+        sample_btn = make_button("Create Sample CSV", glass=True, icon_char="📄")
         sample_btn.clicked.connect(self._mpf_create_sample)
         fg_layout.addWidget(sample_btn)
-        layout.addWidget(file_group)
+        layout.addWidget(self.mpf_file_group)
+
+        # ── Vision Source Calibration (hidden by default) ──
+        self.mpf_vision_group = QGroupBox("👁️ Vision Source Calibration")
+        vg_layout = QVBoxLayout(self.mpf_vision_group)
+        vg_info = QLabel("Calibrate the source region where member data is displayed on screen.")
+        vg_info.setStyleSheet(f"color: {TEXT_SECONDARY}; font-size: 11px;")
+        vg_info.setWordWrap(True)
+        vg_layout.addWidget(vg_info)
+        cal_row = QHBoxLayout()
+        self.mpf_cal_btn = make_button("🎯 Set Source Region", primary=True)
+        self.mpf_cal_btn.clicked.connect(self._mpf_calibrate_source)
+        cal_row.addWidget(self.mpf_cal_btn)
+        self.mpf_source_lbl = QLabel("Not calibrated")
+        self.mpf_source_lbl.setStyleSheet(f"color: {WARNING}; font-family: monospace; font-size: 11px;")
+        cal_row.addWidget(self.mpf_source_lbl)
+        cal_row.addStretch()
+        vg_layout.addLayout(cal_row)
+        self.mpf_vision_group.setVisible(False)
+        layout.addWidget(self.mpf_vision_group)
 
         # ── Progress ──
         prog_group = QGroupBox("📋 Progress")
@@ -870,7 +1010,7 @@ class MainWindow(QMainWindow):
         # ── Smart Wait Toggle ──
         sync_row = QHBoxLayout()
         self.mpf_sync_cb = QCheckBox("Smart Wait (Automatically detect when form is ready via Vision)")
-        self.mpf_sync_cb.setChecked(True)
+        self.mpf_sync_cb.setChecked(False)  # Disabled by default for maximum speed
         self.mpf_sync_cb.setStyleSheet(f"color: {ACCENT}; font-weight: 600;")
         sync_row.addWidget(self.mpf_sync_cb)
         sync_row.addStretch()
@@ -887,7 +1027,7 @@ class MainWindow(QMainWindow):
         }
         
         self.btn_coords["upload"]["delay"].setRange(0, 30)
-        self.btn_coords["upload"]["delay"].setValue(5)
+        self.btn_coords["upload"]["delay"].setValue(2)
         self.btn_coords["upload"]["delay"].setSuffix(" s")
         self.btn_coords["upload"]["delay"].setPrefix("Wait ")
         
@@ -899,7 +1039,7 @@ class MainWindow(QMainWindow):
         def make_row(title, key, has_delay):
             row = QHBoxLayout()
             row.addWidget(QLabel(title))
-            btn = make_button("🎯 Pick Coords", bg_color=PANEL_BG)
+            btn = make_button("🎯 Pick Coords") # Removed invalid bg_color
             btn.clicked.connect(lambda _, k=key, b=btn: self._start_coord_picker(k, b))
             row.addWidget(btn)
             
@@ -940,6 +1080,11 @@ class MainWindow(QMainWindow):
         self._mpf_source_region = None
         self._mpf_worker: MPFWorker | None = None
         self._mpf_total = 0
+
+        # Apply default mode visibility (Vision is default)
+        # Defer via QTimer so widgets are fully constructed first
+        from PyQt5.QtCore import QTimer as _QT
+        _QT.singleShot(0, self._update_mpf_ui_visibility)
 
         return w
 
@@ -1031,24 +1176,28 @@ class MainWindow(QMainWindow):
         self._mpf_log("   Edit the file then click ▶ Start MPF Bot.", "info")
 
     def _mpf_start(self):
-        if not self._mpf_data_file:
+        mode = "screen" if self.mpf_mode_vision.isChecked() else "csv"
+
+        # CSV mode needs a data file
+        if mode == "csv" and not self._mpf_data_file:
             QMessageBox.warning(self, "No Data File",
                 "Please select or create a CSV/JSON data file first.")
             return
 
-        speed = self.mpf_speed_slider.value() / 5.0
+        # Vision mode auto-calibration on start
+        if mode == "screen" and not self._mpf_source_region:
+            import pyautogui
+            sw, sh = pyautogui.size()
+            # Left 45% of the screen
+            self._mpf_source_region = (0, 0, int(sw * 0.45), sh)
+            self._mpf_log(f"🧠 Auto-calibrated Source Region: Left 45% of Screen ({int(sw * 0.45)}x{sh})", "info")
+
+        speed       = self.mpf_speed_slider.value() / 5.0
         field_delay = self.mpf_field_delay.value() / 100.0
         form_delay  = float(self.mpf_form_delay.value())
 
-        mode = "screen" if self.mpf_mode_vision.isChecked() else "csv"
-        
-        if mode == "screen" and not self._mpf_source_region:
-            QMessageBox.warning(self, "Calibration Needed", 
-                "Please calibrate the Source Region first for Live Vision mode.")
-            return
-
         bot = MPFBot(
-            data_file=self._mpf_data_file,
+            data_file=self._mpf_data_file if mode == "csv" else "",
             log_cb=lambda m: self._mpf_log(m),
             status_cb=lambda s: self._mpf_status(s),
             record_done_cb=lambda d, t: self._mpf_record_done(d, t),
@@ -1060,11 +1209,11 @@ class MainWindow(QMainWindow):
             source_mode=mode,
             source_region=self._mpf_source_region,
             end_sequence={
-                "upload": self.btn_coords["upload"]["pos"],
-                "upload_delay": self.btn_coords["upload"]["delay"].value(),
-                "screenshot": self.btn_coords["screenshot"]["pos"],
+                "upload":           self.btn_coords["upload"]["pos"],
+                "upload_delay":     self.btn_coords["upload"]["delay"].value(),
+                "screenshot":       self.btn_coords["screenshot"]["pos"],
                 "screenshot_delay": self.btn_coords["screenshot"]["delay"].value(),
-                "next": self.btn_coords["next"]["pos"],
+                "next":             self.btn_coords["next"]["pos"],
             }
         )
 
@@ -1124,23 +1273,28 @@ class MainWindow(QMainWindow):
         self.mpf_status_lbl.setText(msg)
 
     def _mpf_log(self, msg: str, level: str = "info"):
-        colors = {
-            "info": TEXT_SECONDARY,
-            "success": "#34D399",
-            "warning": "#FBBF24",
-            "error": "#F87171"
+        level_colors = {
+            "info": (TEXT_SECONDARY, "🔹"),
+            "success": (SUCCESS, "✅"),
+            "warning": (WARNING, "⚠️"),
+            "error": (ERROR, "❌")
         }
-        level_map = "info"
-        if "❌" in msg or "Error" in msg.lower():
-            level_map = "error"
-        elif "⚠️" in msg or "Warning" in msg.lower():
-            level_map = "warning"
-        elif "✅" in msg or "🎉" in msg or "▶" in msg:
-            level_map = "success"
-        color = colors.get(level if level != "info" else level_map, TEXT_SECONDARY)
+        
+        current_level = level
+        if level == "info":
+            if "Error" in msg or "Failed" in msg: current_level = "error"
+            elif "Success" in msg or "Complete" in msg or "Record" in msg: current_level = "success"
+            elif "Warning" in msg: current_level = "warning"
+
+        color, icon = level_colors.get(current_level, (TEXT_SECONDARY, "•"))
         ts = datetime.now().strftime("%H:%M:%S")
-        html = f'<span style="color:#4B5563;">[{ts}]</span> <span style="color:{color};">{msg}</span>'
-        self.mpf_log.append(html)
+        
+        # Premium HTML log entry
+        timestamp_html = f'<span style="color:#475569; font-weight:600;">{ts}</span>'
+        icon_html = f'<span style="font-size:12px;">{icon}</span>'
+        msg_html = f'<span style="color:{color}; font-weight:{"700" if current_level != "info" else "500"};">{msg}</span>'
+        
+        self.mpf_log.append(f"{timestamp_html} &nbsp; {icon_html} &nbsp; {msg_html}")
         self.mpf_log.ensureCursorVisible()
 
     # ── Settings Tab ──────────────────────────────────────────────────────────
@@ -1262,13 +1416,42 @@ class MainWindow(QMainWindow):
         layout.addWidget(tess_group)
 
         # Save button
-        save_btn = make_button("  Save Settings", primary=True, icon_char="💾")
+        save_btn = make_button("Save Settings", primary=True, icon_char="💾")
         save_btn.clicked.connect(self._save_settings)
         layout.addWidget(save_btn)
         layout.addStretch()
 
         scroll.setWidget(w)
         return scroll
+
+    # ── Master Controls ───────────────────────────────────────────────────────
+
+    def _master_start(self):
+        if self.tabs.currentIndex() == 3:  # MPF Tab
+            self._mpf_start()
+        else:
+            self._start_automation()
+
+    def _master_stop(self):
+        if self.tabs.currentIndex() == 3:
+            self._mpf_stop()
+        else:
+            self._stop_automation()
+
+    def _stop_automation(self):
+        """Stop generic automation engine."""
+        if hasattr(self, 'engine') and self.engine:
+            self.engine.stop()
+        if hasattr(self, 'worker') and self.worker:
+            self.worker.quit()
+            self.worker.wait()
+        
+        self.start_btn.setEnabled(True)
+        self.stop_btn.setEnabled(False)
+        self.progress_bar.setVisible(False)
+        self._set_status("idle")
+        self.log("⏹ Automation stopped by user", "warning")
+        self.status_bar.showMessage("Automation stopped")
 
     # ── Business Logic ────────────────────────────────────────────────────────
 
@@ -1302,19 +1485,22 @@ class MainWindow(QMainWindow):
         self.log("▶ Automation started", "info")
         self.status_bar.showMessage("Automation running...")
 
-    def _stop_automation(self):
-        if self.worker:
-            self.worker.stop()
-        self.stop_btn.setEnabled(False)
+    def _set_status(self, state: str):
+        colors = {"running": SUCCESS, "idle": TEXT_SECONDARY, "error": ERROR}
+        labels = {"running": "SYSTEM ACTIVE", "idle": "SYSTEM IDLE", "error": "SYSTEM ERROR"}
+        color = colors.get(state, TEXT_SECONDARY)
 
-    def _on_stopped(self):
-        """Called from engine thread when automation stops."""
-        self.start_btn.setEnabled(True)
-        self.stop_btn.setEnabled(False)
-        self.progress_bar.setVisible(False)
-        self._set_status("idle")
-        self._update_memory_stats()
-        self.status_bar.showMessage(f"Automation finished — {self.fields_filled} fields filled")
+        # Update pulse indicator
+        self.pulse_indicator.set_color(color)
+        if state == "running":
+            self.pulse_indicator.start_pulse()
+        else:
+            self.pulse_indicator.stop_pulse()
+
+        self.status_label_header.setText(labels.get(state, "UNKNOWN"))
+        self.status_label_header.setStyleSheet(
+            f"color: {TEXT_PRIMARY}; font-weight: 800; font-size: 11px; letter-spacing: 0.5px;"
+        )
 
     def _on_log(self, msg: str):
         """Receive log message from engine."""
@@ -1351,31 +1537,30 @@ class MainWindow(QMainWindow):
         self.filled_table.setItem(row, 2, conf_item)
         self.filled_table.scrollToBottom()
 
-    def _set_status(self, state: str):
-        colors = {"running": SUCCESS, "idle": TEXT_SECONDARY, "error": ERROR}
-        labels = {"running": "Running", "idle": "Idle", "error": "Error"}
-        color = colors.get(state, TEXT_SECONDARY)
-        self.status_dot.setStyleSheet(f"color: {color}; font-size: 22px;")
-        self.status_label_header.setText(labels.get(state, "Unknown"))
-        self.status_label_header.setStyleSheet(
-            f"color: {color}; font-weight: 600; font-size: 13px;"
-        )
 
     def log(self, msg: str, level: str = "info"):
-        """Append colored message to log consoles."""
-        colors = {
-            "info": TEXT_SECONDARY,
-            "success": "#34D399",
-            "warning": "#FBBF24",
-            "error": "#F87171"
+        """Append premium formatted HTML message to all log consoles."""
+        level_colors = {
+            "info": (TEXT_SECONDARY, "🔹"),
+            "success": (SUCCESS, "✅"),
+            "warning": (WARNING, "⚠️"),
+            "error": (ERROR, "❌")
         }
-        color = colors.get(level, TEXT_SECONDARY)
+        color, icon = level_colors.get(level, (TEXT_SECONDARY, "•"))
         ts = datetime.now().strftime("%H:%M:%S")
-        html = f'<span style="color:#4B5563;">[{ts}]</span> <span style="color:{color};">{msg}</span>'
-        self.log_console.append(html)
-        self.activity_log.append(html)
-        self.log_console.ensureCursorVisible()
-        self.activity_log.ensureCursorVisible()
+        
+        timestamp_html = f'<span style="color:#475569; font-weight:600;">{ts}</span>'
+        icon_html = f'<span style="font-size:12px;">{icon}</span>'
+        msg_html = f'<span style="color:{color}; font-weight:{"700" if level != "info" else "500"};">{msg}</span>'
+        
+        html = f"{timestamp_html} &nbsp; {icon_html} &nbsp; {msg_html}"
+        
+        for console in [self.log_console, self.activity_log]:
+            if isinstance(console, ModernActivityStream):
+                console.add_entry(msg, level)
+            else:
+                console.append(html)
+                console.ensureCursorVisible()
 
     def _update_memory_stats(self):
         """Refresh memory stats and table."""

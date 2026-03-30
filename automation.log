@@ -16,3 +16,54 @@
 2026-03-30 15:32:53,422 [Mapping] INFO: Matched 0/1 label-value pairs to fields
 2026-03-30 15:32:53,422 [BotEngine] INFO: ✅ Matched 0 fields
 2026-03-30 15:32:53,423 [BotEngine] INFO: ⚠️ No fields matched. Will retry or try learning from scratch.
+2026-03-30 20:12:23,892 [MPF_Bot] INFO: 👁️  Running in Live Vision Mode (Reading Screen)
+2026-03-30 20:12:23,903 [MPF_Bot] INFO: 
+━━━ Vision Record 1 ━━━
+2026-03-30 20:12:41,162 [MPF_Bot] INFO: 📊 Total mapped fields: 0
+2026-03-30 20:12:41,167 [MPF_Bot] INFO: ⚠️ No data extracted. Retrying in 3s...
+2026-03-30 20:12:44,172 [MPF_Bot] INFO: 
+━━━ Vision Record 1 ━━━
+2026-03-30 20:13:00,036 [MPF_Bot] INFO: 📊 Total mapped fields: 0
+2026-03-30 20:13:00,039 [MPF_Bot] INFO: ⚠️ No data extracted. Retrying in 3s...
+2026-03-30 20:13:03,041 [MPF_Bot] INFO: 
+━━━ Vision Record 1 ━━━
+2026-03-30 20:13:18,856 [MPF_Bot] INFO: 📊 Total mapped fields: 0
+2026-03-30 20:13:18,859 [MPF_Bot] INFO: ⚠️ No data extracted. Retrying in 3s...
+2026-03-30 20:13:21,861 [MPF_Bot] INFO: 
+━━━ Vision Record 1 ━━━
+2026-03-30 20:13:37,058 [MPF_Bot] INFO: 📊 Total mapped fields: 0
+2026-03-30 20:13:37,062 [MPF_Bot] INFO: ⚠️ No data extracted. Retrying in 3s...
+2026-03-30 20:13:40,064 [MPF_Bot] INFO: 
+━━━ Vision Record 1 ━━━
+2026-03-30 20:13:56,465 [MPF_Bot] INFO: 📊 Total mapped fields: 0
+2026-03-30 20:13:56,470 [MPF_Bot] INFO: ⚠️ No data extracted. Retrying in 3s...
+2026-03-30 20:13:59,473 [MPF_Bot] INFO: 
+━━━ Vision Record 1 ━━━
+2026-03-30 20:14:15,723 [MPF_Bot] INFO: 📊 Total mapped fields: 0
+2026-03-30 20:14:15,726 [MPF_Bot] INFO: ⚠️ No data extracted. Retrying in 3s...
+2026-03-30 20:14:18,727 [MPF_Bot] INFO: 
+━━━ Vision Record 1 ━━━
+2026-03-30 20:14:35,407 [MPF_Bot] INFO: 📊 Total mapped fields: 0
+2026-03-30 20:14:35,409 [MPF_Bot] INFO: ⚠️ No data extracted. Retrying in 3s...
+2026-03-30 20:14:38,411 [MPF_Bot] INFO: 
+━━━ Vision Record 1 ━━━
+2026-03-30 20:14:54,379 [MPF_Bot] INFO: 📊 Total mapped fields: 0
+2026-03-30 20:14:54,382 [MPF_Bot] INFO: ⚠️ No data extracted. Retrying in 3s...
+2026-03-30 20:14:57,385 [MPF_Bot] INFO: 
+━━━ Vision Record 1 ━━━
+2026-03-30 20:15:14,205 [MPF_Bot] INFO: 📊 Total mapped fields: 0
+2026-03-30 20:15:14,208 [MPF_Bot] INFO: ⚠️ No data extracted. Retrying in 3s...
+2026-03-30 20:15:17,209 [MPF_Bot] INFO: 
+━━━ Vision Record 1 ━━━
+2026-03-30 20:15:33,800 [MPF_Bot] INFO: 📊 Total mapped fields: 0
+2026-03-30 20:15:33,802 [MPF_Bot] INFO: ⚠️ No data extracted. Retrying in 3s...
+2026-03-30 20:15:36,803 [MPF_Bot] INFO: 
+━━━ Vision Record 1 ━━━
+2026-03-30 20:15:53,802 [MPF_Bot] INFO: 📊 Total mapped fields: 0
+2026-03-30 20:15:53,805 [MPF_Bot] INFO: ⚠️ No data extracted. Retrying in 3s...
+2026-03-30 20:15:56,808 [MPF_Bot] INFO: 
+━━━ Vision Record 1 ━━━
+2026-03-30 20:16:13,017 [MPF_Bot] INFO: 📊 Total mapped fields: 0
+2026-03-30 20:16:13,019 [MPF_Bot] INFO: ⚠️ No data extracted. Retrying in 3s...
+2026-03-30 20:16:16,021 [MPF_Bot] INFO: 
+━━━ Vision Record 1 ━━━
