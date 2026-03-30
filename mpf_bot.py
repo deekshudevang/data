@@ -410,6 +410,8 @@ class MPFBot:
         for row in raw_records:
             norm_row = {}
             for col, val in row.items():
+                if not col:
+                    continue
                 alias = COLUMN_ALIASES.get(col.lower().strip(), col.lower().strip())
                 norm_row[alias] = val
             normalized.append(norm_row)
